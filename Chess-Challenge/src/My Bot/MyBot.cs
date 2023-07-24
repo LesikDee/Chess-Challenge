@@ -16,6 +16,8 @@ public class MyBot : IChessBot
         {PieceType.Queen, new int[]{100, 1} },
         {PieceType.King, new int[]{5, -1} }
     };
+
+
     public Move Think(Board board, Timer timer)
     {
         //System.Threading.Thread.Sleep(500);
@@ -35,7 +37,7 @@ public class MyBot : IChessBot
     private Move minimaxMove(Board board)
     {
         Move[] moves = board.GetLegalMoves();
-        
+
 
         Move bestMove = moves[0];
         var sideSign = (whiteSide ? 0 : 1) * 2 - 1;
@@ -44,18 +46,20 @@ public class MyBot : IChessBot
         for (var i = 0; i < moves.Length; i++)
         {
             var move = moves[i];
-            
+
             board.MakeMove(move);
 
-            var boardValue = minimax(4, board, !whiteSide);
-           
-            // boardValue += pieceValue[newGameMove.MovePieceType][1];
+            var boardValue = minimax(4, board, -10000, 10000, !whiteSide);
+
+            boardValue += pieceValue[move.MovePieceType][1];
             board.UndoMove(move);
             if (whiteSide && (boardValue > bestValue))
             {
                 bestValue = boardValue;
                 bestMove = move;
-            } else if (!whiteSide && (boardValue < bestValue)) {
+            }
+            else if (!whiteSide && (boardValue < bestValue))
+            {
                 bestValue = boardValue;
                 bestMove = move;
             }
@@ -65,8 +69,10 @@ public class MyBot : IChessBot
         return bestMove;
     }
 
-    private int minimax(int depth, Board board, bool isMaximisingPlayer) {
-        if (depth == 0) {
+    private int minimax(int depth, Board board, int alpha, int beta, bool isMaximisingPlayer)
+    {
+        if (depth == 0)
+        {
             return evaluateBoard(board);
         }
         Move[] moves = board.GetLegalMoves();
@@ -76,8 +82,13 @@ public class MyBot : IChessBot
             for (var i = 0; i < moves.Length; i++)
             {
                 board.MakeMove(moves[i]);
-                bestValue = System.Math.Max(bestValue, minimax(depth - 1, board, !isMaximisingPlayer));
+                bestValue = System.Math.Max(bestValue, minimax(depth - 1, board, alpha, beta, !isMaximisingPlayer));
                 board.UndoMove(moves[i]);
+                alpha = System.Math.Max(alpha, bestValue);
+                if (beta <= alpha)
+                {
+                    return bestValue;
+                }
             }
             return bestValue;
         }
@@ -87,15 +98,20 @@ public class MyBot : IChessBot
             for (var i = 0; i < moves.Length; i++)
             {
                 board.MakeMove(moves[i]);
-                bestValue = System.Math.Min(bestValue, minimax(depth - 1, board, !isMaximisingPlayer));
+                bestValue = System.Math.Min(bestValue, minimax(depth - 1, board, alpha, beta, !isMaximisingPlayer));
                 board.UndoMove(moves[i]);
+                beta = System.Math.Min(beta, bestValue);
+                if (beta <= alpha)
+                {
+                    return bestValue;
+                }
             }
             return bestValue;
         }
     }
 
 
-private int evaluateBoard(Board board)
+    private int evaluateBoard(Board board)
     {
         PieceList[] pieces = board.GetAllPieceLists();
         int count = 0;
